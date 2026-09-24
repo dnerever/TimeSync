@@ -17,6 +17,7 @@ export type { Availability, SlotMinutes } from './codec.ts';
 
 export {
   TIME_OF_DAY_PRESETS,
+  applyBusy,
   applyTimeOfDay,
   createAvailability,
   freeBlocks,
@@ -45,3 +46,6 @@ export type { OverlapOptions } from './overlap.ts';
 
 export { buildIcs, formatIcsInstant } from './ics.ts';
 export type { IcsEvent } from './ics.ts';
+
+export { parseIcsBusy } from './icsparse.ts';
+export type { BusyInterval, IcsImportRange, IcsImportResult } from './icsparse.ts';

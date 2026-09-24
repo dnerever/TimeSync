@@ -129,8 +129,8 @@ already printed or emailed keep decoding.
 | M3  | Share      | QR render, copy link, save PNG, Web Share, density warnings    | ✅ done  |
 | M4  | View       | Decode fragment, clear it, grouped list in the viewer's zone   | ✅ done  |
 | M5  | Overlap    | Intersect two windows, propose a time, `.ics` export           | ✅ done  |
-| M6  | ICS import | File drop, then the proxy decision below                       | **next** |
-| M7  | Polish     | PWA/offline, keyboard a11y, privacy page                       |          |
+| M6  | ICS import | Drag in an exported calendar; busy time blocked out            | ✅ done  |
+| M7  | Polish     | PWA/offline, keyboard a11y, privacy page                       | **next** |
 
 ### QR rendering is client-side and theme-proof
 
@@ -189,21 +189,44 @@ separators. Calendar apps tend to respond by importing nothing and saying
 nothing, so each of those has a test, including one that round-trips a
 multi-byte summary through a strict UTF-8 decoder.
 
-## The ICS question (M6)
+## The ICS question, answered (M6)
 
-Feed import and a zero-knowledge design pull against each other. Google's `.ics`
-endpoint returns `200` with no `Access-Control-Allow-Origin`, confirmed
-2026-09-23, so a browser `fetch()` from our origin is blocked. Resolution, in
-order of preference:
+Feed import and a zero-knowledge design pull against each other. Google's
+`.ics` endpoint returns `200` with no `Access-Control-Allow-Origin`, confirmed
+2026-09-23, so a browser `fetch()` from our origin is blocked.
 
-1. **File drop** — the user downloads their `.ics` and drags it in. Parsed
-   entirely in-browser. Zero servers, zero compromise, works with every provider.
-2. **Stateless proxy**, opt-in and plainly labelled — a small worker that fetches
-   the feed and returns free/busy intervals only, stripping event titles before
-   they come back, storing and logging nothing. The UI must say that subscribing
-   sends the feed URL to a server, and that drag-and-drop does not.
-3. **OAuth** stays off the roadmap. It would need an always-on server holding
-   refresh tokens, and it undermines the central claim.
+**Resolved in favour of the file drop.** The user exports their calendar and
+drags the file in; it is parsed in the browser and never uploaded. That keeps
+the privacy claim structural rather than promised, and it works with every
+provider instead of one.
+
+The stateless proxy stays available if subscribe-and-refresh is ever wanted
+badly enough, but it is no longer on the critical path. It would have to be
+opt-in and plainly labelled, because subscribing sends the feed URL to a
+server, and drag-and-drop does not. OAuth stays off the roadmap: it needs an
+always-on server holding refresh tokens, and it undermines the central claim.
+
+### Under-blocking is the failure that matters
+
+If an imported busy period is missed, TimeSync offers a time the user cannot
+make — the exact mistake the rest of the app works to avoid. Over-blocking is
+merely inconvenient. So the parser rounds against the user's free time
+throughout: a meeting landing mid-slot takes the whole slot, an unrecognised
+time zone falls back to the viewer's rather than dropping the event, and an
+event whose recurrence rule cannot be expanded still blocks its first
+occurrence.
+
+Everything not fully understood is counted and shown in the interface rather
+than swallowed: unexpandable repeat rules, substituted time zones, all-day
+events, and cancelled or free-marked events that were deliberately left alone.
+An import can also be undone in one click.
+
+RFC 5545 is enormous and most of it does not bear on "when are they busy".
+Handled: folded lines, quoted parameters, UTC / zoned / floating / date-only
+values, `DTEND` or `DURATION`, `STATUS:CANCELLED`, `TRANSP:TRANSPARENT`,
+`EXDATE`, and `FREQ=DAILY|WEEKLY|MONTHLY|YEARLY` with `INTERVAL`, `COUNT`,
+`UNTIL` and plain `BYDAY`. Not handled, and reported: ordinal `BYDAY` ("2FR"),
+`BYSETPOS`, `BYMONTHDAY` and friends.
 
 ## Risks
 
