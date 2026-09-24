@@ -39,3 +39,9 @@ export type { LocalParts } from './timezone.ts';
 
 export { packBitmap, unpackBitmap } from './bits.ts';
 export { toBase64Url, fromBase64Url } from './base64url.ts';
+
+export { overlappingBlocks } from './overlap.ts';
+export type { OverlapOptions } from './overlap.ts';
+
+export { buildIcs, formatIcsInstant } from './ics.ts';
+export type { IcsEvent } from './ics.ts';
