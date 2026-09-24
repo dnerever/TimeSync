@@ -3,15 +3,14 @@ import {
   TIME_OF_DAY_PRESETS,
   type Availability,
   applyTimeOfDay,
-  buildShareUrl,
   createAvailability,
-  encodeAvailability,
   freeBlocks,
   localParts,
   resizeWindow,
 } from '@timesync/core';
 
 import { useAutosave } from '../autosave.ts';
+import { ShareCard } from '../components/ShareCard.tsx';
 import { WeekGrid } from '../components/WeekGrid.tsx';
 import { loadAvailability } from '../storage.ts';
 
@@ -36,7 +35,6 @@ export function HomePage() {
   const [availability, setAvailability] = useState<Availability | null>(null);
   const [weekdaysOnly, setWeekdaysOnly] = useState(true);
   const [hourWindow, setHourWindow] = useState<keyof typeof HOUR_WINDOWS>('waking');
-  const [payload, setPayload] = useState<string | null>(null);
 
   useEffect(() => {
     setAvailability(loadAvailability() ?? startingAvailability());
@@ -44,19 +42,18 @@ export function HomePage() {
 
   useAutosave(availability);
 
-  useEffect(() => {
-    if (!availability) return;
-    let current = true;
-    void encodeAvailability(availability).then((encoded) => {
-      if (current) setPayload(encoded);
-    });
-    return () => {
-      current = false;
-    };
-  }, [availability]);
-
   const onSlotsChange = useCallback((slots: Uint8Array) => {
     setAvailability((previous) => (previous ? { ...previous, slots } : previous));
+  }, []);
+
+  const onLabelChange = useCallback((label: string) => {
+    setAvailability((previous) => {
+      if (!previous) return previous;
+      // Rebuilt rather than assigned undefined: the label is an optional
+      // property, and exactOptionalPropertyTypes draws that distinction.
+      const { label: _cleared, ...rest } = previous;
+      return label.trim() === '' ? rest : { ...rest, label };
+    });
   }, []);
 
   const blocks = useMemo(() => (availability ? freeBlocks(availability) : []), [availability]);
@@ -146,20 +143,12 @@ export function HomePage() {
         onChange={onSlotsChange}
       />
 
-      <div className="card">
-        <strong>Share</strong>
-        <p>
-          {blocks.length} open {blocks.length === 1 ? 'block' : 'blocks'} across{' '}
-          {availability.dayCount} days
-          {payload ? `, encoding to ${payload.length} characters` : ''}.
-        </p>
-        {payload && (
-          <p>
-            <a href={buildShareUrl(`${window.location.origin}/v`, payload)}>Open the shared view</a>{' '}
-            <small>— QR code and copy-link arrive in M3.</small>
-          </p>
-        )}
-      </div>
+      <p className="summary">
+        {blocks.length} open {blocks.length === 1 ? 'block' : 'blocks'} across{' '}
+        {availability.dayCount} days.
+      </p>
+
+      <ShareCard availability={availability} onLabelChange={onLabelChange} />
     </main>
   );
 }

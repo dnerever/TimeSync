@@ -13,7 +13,7 @@
     "dev": "npm run dev -w @timesync/web",
     "build": "npm run build -w @timesync/web",
     "typecheck": "npm run typecheck -w @timesync/core && npm run typecheck -w @timesync/web",
-    "test": "npm run test -w @timesync/core",
+    "test": "npm run test -w @timesync/core && npm run test -w @timesync/web",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },

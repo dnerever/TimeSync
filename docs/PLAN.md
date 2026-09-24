@@ -132,6 +132,25 @@ already printed or emailed keep decoding.
 | M6     | ICS import | File drop, then the proxy decision below                           |         |
 | M7     | Polish     | PWA/offline, keyboard a11y, privacy page                           |         |
 
+### QR rendering is client-side and theme-proof
+
+The code contains the availability itself, so handing the URL to a server-side
+image generator would quietly undo the point of keeping the payload in the
+fragment. Rendering runs entirely in the browser, from the raw module matrix:
+one merged SVG path rather than a rect per module, which for a version 9 code
+is the difference between a handful of nodes and about 2,800.
+
+The code is fixed black on white in both themes. Plenty of scanners reject an
+inverted code, and one that fails at a reception desk is worse than one that
+looks out of place in dark mode.
+
+Error correction is level M. Level L would be one version smaller, but the
+codes are small enough that tolerating a little glare or a thumb over a corner
+is the better trade when someone is reading a phone screen across a desk.
+
+Verified by scanning the output back: both the on-screen SVG and the saved PNG
+decode to the exact share URL, and following it renders the sharer's times.
+
 ## The ICS question (M6)
 
 Feed import and a zero-knowledge design pull against each other. Google's `.ics`
