@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <!-- Nothing here may leak a shared payload. The fragment never reaches the
+         network on its own; a referrer would be the other way it could escape. -->
+    <meta name="referrer" content="no-referrer" />
+    <title>TimeSync</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
