@@ -172,17 +172,35 @@ export function resizeWindow(av: Availability, timeZone: string, dayCount: numbe
   return next;
 }
 
+export interface FreeBlock {
+  start: Date;
+  end: Date;
+}
+
+export interface FreeBlockOptions {
+  /**
+   * Drop blocks that have already finished. A shared code is a snapshot, so it
+   * may well be opened days after it was made, and past times are noise at
+   * best and misleading at worst.
+   */
+  after?: Date;
+}
+
 /** Contiguous runs of free time, as absolute instants. */
-export function freeBlocks(av: Availability): Array<{ start: Date; end: Date }> {
-  const blocks: Array<{ start: Date; end: Date }> = [];
+export function freeBlocks(av: Availability, options: FreeBlockOptions = {}): FreeBlock[] {
+  const blocks: FreeBlock[] = [];
   const at = (index: number): Date => new Date((av.originMinute + index * av.slotMinutes) * 60_000);
+  const cutoff = options.after?.getTime();
 
   let runStart: number | null = null;
   for (let i = 0; i <= av.slots.length; i++) {
     const free = i < av.slots.length && av.slots[i] === 1;
     if (free && runStart === null) runStart = i;
     if (!free && runStart !== null) {
-      blocks.push({ start: at(runStart), end: at(i) });
+      const block = { start: at(runStart), end: at(i) };
+      // A block still running right now is kept whole: truncating it to the
+      // current minute would report a start time that was never offered.
+      if (cutoff === undefined || block.end.getTime() > cutoff) blocks.push(block);
       runStart = null;
     }
   }

@@ -6,6 +6,7 @@ import { router } from './router.tsx';
 import './styles.css';
 import './grid.css';
 import './share.css';
+import './view.css';
 
 const container = document.getElementById('root');
 if (!container) throw new Error('missing #root');

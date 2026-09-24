@@ -28,6 +28,8 @@ export type {
   ApplyOptions,
   CalendarDate,
   CreateAvailabilityOptions,
+  FreeBlock,
+  FreeBlockOptions,
   LocalDay,
   TimeOfDayPreset,
 } from './grid.ts';

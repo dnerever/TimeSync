@@ -121,16 +121,16 @@ already printed or emailed keep decoding.
 
 ## Milestones
 
-| #      | Milestone  | What lands                                                         | Status  |
-| ------ | ---------- | ------------------------------------------------------------------ | ------- |
-| M0     | Scaffold   | Workspace, TS, Vite + React + TanStack Router, static build        | ✅ done |
-| M1     | Codec      | Payload format, encode/decode, round-trip and tamper tests         | ✅ done |
-| M2     | Paint      | Week grid, drag select, time-of-day presets, local persistence     | ✅ done |
-| **M3** | **Share**  | **Encode → URL → QR render, copy, download PNG, density warnings** | next    |
-| M4     | View       | Decode fragment; standalone mode as a clean bookable list          |         |
-| M5     | Overlap    | Intersect with saved availability; propose a time; `.ics` for both |         |
-| M6     | ICS import | File drop, then the proxy decision below                           |         |
-| M7     | Polish     | PWA/offline, keyboard a11y, privacy page                           |         |
+| #   | Milestone  | What lands                                                         | Status   |
+| --- | ---------- | ------------------------------------------------------------------ | -------- |
+| M0  | Scaffold   | Workspace, TS, Vite + React + TanStack Router, static build        | ✅ done  |
+| M1  | Codec      | Payload format, encode/decode, round-trip and tamper tests         | ✅ done  |
+| M2  | Paint      | Week grid, drag select, time-of-day presets, local persistence     | ✅ done  |
+| M3  | Share      | QR render, copy link, save PNG, Web Share, density warnings        | ✅ done  |
+| M4  | View       | Decode fragment, clear it, grouped list in the viewer's zone       | ✅ done  |
+| M5  | Overlap    | Intersect with saved availability; propose a time; `.ics` for both | **next** |
+| M6  | ICS import | File drop, then the proxy decision below                           |          |
+| M7  | Polish     | PWA/offline, keyboard a11y, privacy page                           |          |
 
 ### QR rendering is client-side and theme-proof
 
@@ -151,6 +151,15 @@ is the better trade when someone is reading a phone screen across a desk.
 Verified by scanning the output back: both the on-screen SVG and the saved PNG
 decode to the exact share URL, and following it renders the sharer's times.
 
+### Clearing the fragment makes second links the normal case
+
+Once the viewer clears the fragment, the address bar sits at a bare `/v`. So
+opening a second code goes from `/v` to `/v#p=...` — a change of fragment only,
+which browsers treat as a **same-document navigation**: nothing reloads and
+nothing remounts. Without a `hashchange` listener the page keeps showing the
+previous person's times, and the privacy measure above turns that from an edge
+case into the ordinary one. Found by driving the app, not by reading it.
+
 ## The ICS question (M6)
 
 Feed import and a zero-knowledge design pull against each other. Google's `.ics`
@@ -169,9 +178,11 @@ order of preference:
 
 ## Risks
 
-- **Fragments persist in browser history.** Someone's availability sits in the
-  scanner's URL bar. Mitigate with an expiry in the payload and a viewer that
-  clears the fragment after decoding.
+- ~~**Fragments persist in browser history.**~~ Handled in M4: the viewer
+  clears the fragment with `replaceState` once decoding succeeds, keeping the
+  availability in memory only. A failed decode keeps it, so a mangled link can
+  still be inspected. Reloading afterwards shows an empty state explaining why,
+  and a copy button beforehand lets anyone keep the link deliberately.
 - **Analytics leaking the fragment.** See the privacy section. Verify, don't
   assume.
 - **Drag-paint accessibility.** A mouse-drag grid is a genuine a11y trap. The

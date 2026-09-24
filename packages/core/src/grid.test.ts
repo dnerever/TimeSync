@@ -186,3 +186,34 @@ test('freeBlocks merges adjacent slots and closes a run at the end', () => {
   assert.equal((blocks[0]!.end.getTime() - blocks[0]!.start.getTime()) / 60_000, 60);
   assert.equal(blocks[2]!.end.getTime() / 60_000, av.originMinute + slots.length * av.slotMinutes);
 });
+
+test('freeBlocks can drop times that have already passed', () => {
+  const av = blank(UTC, '2026-10-05', 3);
+  const slots = Uint8Array.from(av.slots);
+  slots.fill(1, 0, 4); // day 1, 00:00-01:00
+  slots.fill(1, 96, 100); // day 2, 00:00-01:00
+  slots.fill(1, 192, 196); // day 3, 00:00-01:00
+  const painted = { ...av, slots };
+
+  assert.equal(freeBlocks(painted).length, 3);
+
+  // Midway through the second block: it is still running, so it survives whole.
+  const during = new Date(Date.UTC(2026, 9, 6, 0, 30));
+  const remaining = freeBlocks(painted, { after: during });
+  assert.equal(remaining.length, 2);
+  assert.equal(remaining[0]!.start.toISOString(), '2026-10-06T00:00:00.000Z');
+
+  // After everything has finished.
+  assert.equal(freeBlocks(painted, { after: new Date(Date.UTC(2026, 9, 9)) }).length, 0);
+});
+
+test('a block ending exactly at the cutoff is treated as past', () => {
+  const av = blank(UTC, '2026-10-05', 1);
+  const slots = Uint8Array.from(av.slots);
+  slots.fill(1, 0, 4);
+  const painted = { ...av, slots };
+
+  const exactly = new Date(Date.UTC(2026, 9, 5, 1, 0));
+  assert.equal(freeBlocks(painted, { after: exactly }).length, 0);
+  assert.equal(freeBlocks(painted, { after: new Date(exactly.getTime() - 1) }).length, 1);
+});
