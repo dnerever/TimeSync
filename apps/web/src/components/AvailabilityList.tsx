@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { type ReactNode, useMemo } from 'react';
 import type { FreeBlock } from '@timesync/core';
 
 import { describeDuration, groupByDay } from '../daygroups.ts';
@@ -8,9 +8,11 @@ interface AvailabilityListProps {
   /** The viewer's own zone. Everything is rendered in it. */
   timeZone: string;
   now: Date;
+  /** Optional per-block control, such as adding that time to a calendar. */
+  renderAction?: (block: FreeBlock) => ReactNode;
 }
 
-export function AvailabilityList({ blocks, timeZone, now }: AvailabilityListProps) {
+export function AvailabilityList({ blocks, timeZone, now, renderAction }: AvailabilityListProps) {
   const groups = useMemo(() => groupByDay(blocks, timeZone, now), [blocks, timeZone, now]);
 
   // Bound to the zone we were handed rather than the system default, so
@@ -49,6 +51,7 @@ export function AvailabilityList({ blocks, timeZone, now }: AvailabilityListProp
                 <span className="slot-length">
                   {describeDuration((block.end.getTime() - block.start.getTime()) / 60_000)}
                 </span>
+                {renderAction && <span className="slot-action">{renderAction(block)}</span>}
               </li>
             ))}
           </ul>

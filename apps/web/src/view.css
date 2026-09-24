@@ -67,3 +67,37 @@
   color: var(--muted);
   white-space: nowrap;
 }
+
+.overlap {
+  margin: 1.5rem 0;
+}
+
+.overlap-heading,
+.section-heading {
+  font-size: 1.1rem;
+  margin: 0 0 0.35rem;
+}
+
+/* The sharer's full availability is context under the mutual times, so it
+   sits back from the section that answers the question. */
+.section-heading {
+  margin-top: 2rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+}
+
+.overlap .availability {
+  margin-top: 0.75rem;
+}
+
+/* Pushes the per-row control to the trailing edge, leaving the time and its
+   length reading as one phrase on the left. */
+.slot-action {
+  margin-left: auto;
+}
+
+button.small {
+  padding: 0.25rem 0.55rem;
+  font-size: 0.82rem;
+}

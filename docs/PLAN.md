@@ -121,16 +121,16 @@ already printed or emailed keep decoding.
 
 ## Milestones
 
-| #   | Milestone  | What lands                                                         | Status   |
-| --- | ---------- | ------------------------------------------------------------------ | -------- |
-| M0  | Scaffold   | Workspace, TS, Vite + React + TanStack Router, static build        | ✅ done  |
-| M1  | Codec      | Payload format, encode/decode, round-trip and tamper tests         | ✅ done  |
-| M2  | Paint      | Week grid, drag select, time-of-day presets, local persistence     | ✅ done  |
-| M3  | Share      | QR render, copy link, save PNG, Web Share, density warnings        | ✅ done  |
-| M4  | View       | Decode fragment, clear it, grouped list in the viewer's zone       | ✅ done  |
-| M5  | Overlap    | Intersect with saved availability; propose a time; `.ics` for both | **next** |
-| M6  | ICS import | File drop, then the proxy decision below                           |          |
-| M7  | Polish     | PWA/offline, keyboard a11y, privacy page                           |          |
+| #   | Milestone  | What lands                                                     | Status   |
+| --- | ---------- | -------------------------------------------------------------- | -------- |
+| M0  | Scaffold   | Workspace, TS, Vite + React + TanStack Router, static build    | ✅ done  |
+| M1  | Codec      | Payload format, encode/decode, round-trip and tamper tests     | ✅ done  |
+| M2  | Paint      | Week grid, drag select, time-of-day presets, local persistence | ✅ done  |
+| M3  | Share      | QR render, copy link, save PNG, Web Share, density warnings    | ✅ done  |
+| M4  | View       | Decode fragment, clear it, grouped list in the viewer's zone   | ✅ done  |
+| M5  | Overlap    | Intersect two windows, propose a time, `.ics` export           | ✅ done  |
+| M6  | ICS import | File drop, then the proxy decision below                       | **next** |
+| M7  | Polish     | PWA/offline, keyboard a11y, privacy page                       |          |
 
 ### QR rendering is client-side and theme-proof
 
@@ -159,6 +159,35 @@ which browsers treat as a **same-document navigation**: nothing reloads and
 nothing remounts. Without a `hashchange` listener the page keeps showing the
 previous person's times, and the privacy measure above turns that from an edge
 case into the ordinary one. Found by driving the app, not by reading it.
+
+### Overlap is computed over absolute time, not by index
+
+Two windows arrive from different devices and need not agree about anything:
+different slot sizes, different date ranges, and — because a zone at a `:45`
+offset shifts the whole grid — origins that do not share a slot boundary.
+Walking two slot vectors in step would produce plausible nonsense the moment
+the grids disagreed, so the intersection is computed over absolute minutes at
+the finer of the two resolutions.
+
+Where a candidate interval straddles two slots of a source, every slot it
+touches must be free. Erring toward "busy" is the right way to be wrong here:
+offering a time someone cannot make is worse than missing one.
+
+The result is a list of blocks rather than an `Availability`, because an
+overlap is an arbitrary span while an `Availability` is a whole number of days,
+and padding one into the other would invent time nobody offered.
+
+Mutual gaps shorter than 30 minutes are not offered. A ten-minute sliver is not
+a meeting.
+
+### iCalendar fails quietly, so it is tested
+
+RFC 5545 is particular in ways that produce no error: lines must end CRLF, long
+lines must fold at 75 **octets** (a folded emoji is a corrupt file), and commas,
+semicolons and backslashes in text must be escaped or they read as field
+separators. Calendar apps tend to respond by importing nothing and saying
+nothing, so each of those has a test, including one that round-trips a
+multi-byte summary through a strict UTF-8 decoder.
 
 ## The ICS question (M6)
 

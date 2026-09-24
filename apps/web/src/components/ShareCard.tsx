@@ -7,6 +7,7 @@ import {
 } from '@timesync/core';
 
 import { QUIET_ZONE, buildQr, describeDensity, qrToPath, qrToPngBlob } from '../qr.ts';
+import { downloadBlob } from '../download.ts';
 
 interface ShareCardProps {
   availability: Availability;
@@ -76,13 +77,7 @@ export function ShareCard({ availability, onLabelChange }: ShareCardProps) {
   const download = async (): Promise<void> => {
     if (!qr) return;
     try {
-      const blob = await qrToPngBlob(qr);
-      const href = URL.createObjectURL(blob);
-      const anchor = document.createElement('a');
-      anchor.href = href;
-      anchor.download = 'timesync-availability.png';
-      anchor.click();
-      URL.revokeObjectURL(href);
+      downloadBlob(await qrToPngBlob(qr), 'timesync-availability.png');
       say('saved', 'Image saved.');
     } catch {
       say('error', 'Could not create the image.');

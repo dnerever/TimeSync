@@ -3,6 +3,8 @@ import { Link } from '@tanstack/react-router';
 import { type Availability, decodeAvailability, extractPayload, freeBlocks } from '@timesync/core';
 
 import { AvailabilityList } from '../components/AvailabilityList.tsx';
+import { OverlapSection } from '../components/OverlapSection.tsx';
+import { loadAvailability } from '../storage.ts';
 
 const VIEWER_ZONE = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
@@ -24,6 +26,8 @@ export function ViewPage() {
 
   const originalUrl = useRef(window.location.href);
   const now = useMemo(() => new Date(), []);
+  // Read once: nothing on this page edits it, and comparing happens locally.
+  const mine = useMemo(() => loadAvailability(), []);
 
   useEffect(() => {
     let current = true;
@@ -128,6 +132,8 @@ export function ViewPage() {
     <main>
       <h1>{availability.label ?? 'Shared availability'}</h1>
 
+      <OverlapSection theirs={availability} mine={mine} timeZone={VIEWER_ZONE} now={now} />
+
       {upcoming.length === 0 ? (
         <>
           <p className="lede">
@@ -152,17 +158,12 @@ export function ViewPage() {
             </p>
           )}
 
+          <h2 className="section-heading">
+            {availability.label ? `${availability.label}'s times` : 'Their times'}
+          </h2>
           <AvailabilityList blocks={upcoming} timeZone={VIEWER_ZONE} now={now} />
         </>
       )}
-
-      <div className="card placeholder">
-        <strong>Comparing with your own calendar</strong>
-        <p>
-          Arriving in M5 — open this where you&rsquo;ve painted your own availability and TimeSync
-          will show only the times you both have free.
-        </p>
-      </div>
 
       <div className="card">
         <strong>Keep this link?</strong>
