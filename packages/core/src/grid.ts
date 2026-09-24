@@ -206,3 +206,29 @@ export function freeBlocks(av: Availability, options: FreeBlockOptions = {}): Fr
   }
   return blocks;
 }
+
+/**
+ * Clear any slot a busy period touches.
+ *
+ * A slot is only kept free when the whole of it is free, so a meeting landing
+ * mid-slot takes the slot with it. That rounds against the user's available
+ * time on purpose: the alternative is offering a quarter of an hour they are
+ * actually in a meeting for.
+ */
+export function applyBusy(av: Availability, busy: Array<{ start: Date; end: Date }>): Uint8Array {
+  const slots = Uint8Array.from(av.slots);
+
+  for (const period of busy) {
+    const startMinute = period.start.getTime() / 60_000;
+    const endMinute = period.end.getTime() / 60_000;
+    if (!(endMinute > startMinute)) continue;
+
+    const first = Math.floor((startMinute - av.originMinute) / av.slotMinutes);
+    const last = Math.ceil((endMinute - av.originMinute) / av.slotMinutes) - 1;
+
+    for (let index = Math.max(0, first); index <= Math.min(last, slots.length - 1); index++) {
+      slots[index] = 0;
+    }
+  }
+  return slots;
+}

@@ -10,6 +10,7 @@ import {
 } from '@timesync/core';
 
 import { useAutosave } from '../autosave.ts';
+import { ImportCard } from '../components/ImportCard.tsx';
 import { ShareCard } from '../components/ShareCard.tsx';
 import { WeekGrid } from '../components/WeekGrid.tsx';
 import { loadAvailability } from '../storage.ts';
@@ -147,6 +148,8 @@ export function HomePage() {
         {blocks.length} open {blocks.length === 1 ? 'block' : 'blocks'} across{' '}
         {availability.dayCount} days.
       </p>
+
+      <ImportCard availability={availability} timeZone={zone} onChange={onSlotsChange} />
 
       <ShareCard availability={availability} onLabelChange={onLabelChange} />
     </main>
