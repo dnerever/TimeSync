@@ -1,0 +1,118 @@
+.summary {
+  color: var(--muted);
+  margin: 0 0 1rem;
+}
+
+.share {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.share-name {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  max-width: 22rem;
+}
+
+.share-name small {
+  font-weight: normal;
+}
+
+.share-name input {
+  font: inherit;
+  padding: 0.45rem 0.6rem;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--bg);
+  color: var(--fg);
+}
+
+/*
+ * The frame stays white in both themes. The code inside is fixed black on
+ * white because scanners reject inverted codes, so a themed surround would
+ * only make the boundary look like a mistake.
+ */
+.qr-frame {
+  align-self: flex-start;
+  background: #fff;
+  padding: 0.75rem;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  line-height: 0;
+}
+
+.qr-frame svg {
+  display: block;
+  width: 220px;
+  height: 220px;
+}
+
+.qr-meta {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.density-comfortable {
+  color: var(--accent);
+}
+
+.density-dense {
+  color: #9a6b1f;
+}
+
+.density-crowded {
+  color: #a33;
+}
+
+@media (prefers-color-scheme: dark) {
+  .density-dense {
+    color: #d8a64a;
+  }
+
+  .density-crowded {
+    color: #e08080;
+  }
+}
+
+.share-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.feedback {
+  margin: 0;
+  min-height: 1.2em;
+  font-size: 0.85rem;
+  color: var(--accent);
+}
+
+.feedback.error {
+  color: #a33;
+}
+
+.share-url {
+  display: block;
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--fg) 6%, transparent);
+  word-break: break-all;
+}
+
+summary {
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.privacy-note {
+  margin: 0;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--line);
+  font-size: 0.85rem;
+  color: var(--muted);
+}

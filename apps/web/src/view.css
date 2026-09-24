@@ -1,0 +1,69 @@
+.zone-note {
+  padding: 0.6rem 0.85rem;
+  border-left: 3px solid var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+  border-radius: 0 6px 6px 0;
+  font-size: 0.9rem;
+}
+
+.availability {
+  margin: 1.5rem 0;
+}
+
+.day-group + .day-group {
+  margin-top: 1.5rem;
+}
+
+.day-group h2 {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.day-group .relative {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--bg);
+  background: var(--accent);
+  padding: 0.12rem 0.4rem;
+  border-radius: 4px;
+}
+
+.day-group ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.day-group li {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.6rem 0.85rem;
+}
+
+.day-group li + li {
+  border-top: 1px solid var(--line);
+}
+
+/* The desk case: someone reads these aloud, so the time itself carries the
+   weight and the duration sits back. */
+.slot-time {
+  font-size: 1.05rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.slot-length {
+  font-size: 0.82rem;
+  color: var(--muted);
+  white-space: nowrap;
+}

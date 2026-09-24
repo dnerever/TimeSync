@@ -1,0 +1,28 @@
+{
+  "name": "timesync",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev -w @timesync/web",
+    "build": "npm run build -w @timesync/web",
+    "typecheck": "npm run typecheck -w @timesync/core && npm run typecheck -w @timesync/web",
+    "test": "npm run test -w @timesync/core && npm run test -w @timesync/web",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "prettier": "^3.4.2",
+    "typescript": "^5.9.2"
+  },
+  "allowScripts": {
+    "esbuild@0.25.12": true
+  }
+}
