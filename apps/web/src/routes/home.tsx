@@ -1,74 +1,162 @@
-import { useState } from 'react';
-import { buildShareUrl, encodeAvailability, slotsPerDay, type Availability } from '@timesync/core';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  TIME_OF_DAY_PRESETS,
+  type Availability,
+  applyTimeOfDay,
+  buildShareUrl,
+  createAvailability,
+  encodeAvailability,
+  freeBlocks,
+  localParts,
+  resizeWindow,
+} from '@timesync/core';
 
-/**
- * A stand-in calendar so the encode/share path can be exercised end to end
- * before the painting grid exists. Replaced wholesale in M2.
- */
-function demoAvailability(): Availability {
-  const slotMinutes = 15;
-  const dayCount = 21;
-  const perDay = slotsPerDay(slotMinutes);
-  const perHour = 60 / slotMinutes;
+import { useAutosave } from '../autosave.ts';
+import { WeekGrid } from '../components/WeekGrid.tsx';
+import { loadAvailability } from '../storage.ts';
 
-  // Start at the next midnight UTC so the origin lands on a slot boundary.
-  const origin = new Date();
-  origin.setUTCHours(0, 0, 0, 0);
+const LOCAL_ZONE = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-  const slots = new Uint8Array(dayCount * perDay);
-  for (let day = 0; day < dayCount; day++) {
-    const base = day * perDay;
-    const weekday = new Date(origin.getTime() + day * 86_400_000).getUTCDay();
-    if (weekday === 0 || weekday === 6) continue;
-    slots.fill(1, base + 9 * perHour, base + 12 * perHour);
-    slots.fill(1, base + 14 * perHour, base + 17 * perHour);
-  }
+const HOUR_WINDOWS = {
+  waking: { label: 'Waking hours', fromMinute: 7 * 60, toMinute: 22 * 60 },
+  full: { label: 'Full day', fromMinute: 0, toMinute: 24 * 60 },
+} as const;
 
-  return {
-    originMinute: origin.getTime() / 60_000,
-    slotMinutes,
-    dayCount,
-    slots,
-    label: 'Demo',
-    timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-  };
+function startingAvailability(): Availability {
+  const today = localParts(LOCAL_ZONE, new Date());
+  return createAvailability({
+    timeZone: LOCAL_ZONE,
+    start: { year: today.year, month: today.month, day: today.day },
+    dayCount: 21,
+    slotMinutes: 15,
+  });
 }
 
 export function HomePage() {
-  const [shareUrl, setShareUrl] = useState<string | null>(null);
+  const [availability, setAvailability] = useState<Availability | null>(null);
+  const [weekdaysOnly, setWeekdaysOnly] = useState(true);
+  const [hourWindow, setHourWindow] = useState<keyof typeof HOUR_WINDOWS>('waking');
+  const [payload, setPayload] = useState<string | null>(null);
 
-  const generate = async (): Promise<void> => {
-    const payload = await encodeAvailability(demoAvailability());
-    setShareUrl(buildShareUrl(window.location.origin + '/v', payload));
+  useEffect(() => {
+    setAvailability(loadAvailability() ?? startingAvailability());
+  }, []);
+
+  useAutosave(availability);
+
+  useEffect(() => {
+    if (!availability) return;
+    let current = true;
+    void encodeAvailability(availability).then((encoded) => {
+      if (current) setPayload(encoded);
+    });
+    return () => {
+      current = false;
+    };
+  }, [availability]);
+
+  const onSlotsChange = useCallback((slots: Uint8Array) => {
+    setAvailability((previous) => (previous ? { ...previous, slots } : previous));
+  }, []);
+
+  const blocks = useMemo(() => (availability ? freeBlocks(availability) : []), [availability]);
+
+  if (!availability) return <main>Loading…</main>;
+
+  const zone = availability.timeZone ?? LOCAL_ZONE;
+  const applyPreset = (band: { startMinute: number; endMinute: number }, value: 0 | 1): void => {
+    setAvailability({
+      ...availability,
+      slots: applyTimeOfDay(availability, zone, band, value, { weekdaysOnly }),
+    });
   };
 
   return (
     <main>
       <h1>TimeSync</h1>
-      <p className="lede">A calendar that makes finding time easy while respecting your privacy.</p>
+      <p className="lede">
+        Paint when you&rsquo;re free, then share it. Everything below stays on this device until you
+        choose to hand someone a link.
+      </p>
 
-      <div className="card placeholder">
-        <strong>Availability grid</strong>
-        <p>Drag-to-paint week grid with morning / midday / afternoon presets — arriving in M2.</p>
+      <div className="controls">
+        <div className="control-group">
+          <span className="control-label">Add</span>
+          {TIME_OF_DAY_PRESETS.map((preset) => (
+            <button key={preset.id} type="button" onClick={() => applyPreset(preset, 1)}>
+              {preset.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="control-group">
+          <label>
+            <input
+              type="checkbox"
+              checked={weekdaysOnly}
+              onChange={(event) => setWeekdaysOnly(event.target.checked)}
+            />{' '}
+            Weekdays only
+          </label>
+          <label>
+            Show{' '}
+            <select
+              value={hourWindow}
+              onChange={(event) => setHourWindow(event.target.value as keyof typeof HOUR_WINDOWS)}
+            >
+              {Object.entries(HOUR_WINDOWS).map(([key, value]) => (
+                <option key={key} value={key}>
+                  {value.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Range{' '}
+            <select
+              value={availability.dayCount}
+              onChange={(event) =>
+                setAvailability(resizeWindow(availability, zone, Number(event.target.value)))
+              }
+            >
+              {[7, 14, 21, 28].map((days) => (
+                <option key={days} value={days}>
+                  {days / 7} week{days > 7 ? 's' : ''}
+                </option>
+              ))}
+            </select>
+          </label>
+          <button
+            type="button"
+            className="secondary"
+            onClick={() =>
+              setAvailability({ ...availability, slots: new Uint8Array(availability.slots.length) })
+            }
+          >
+            Clear all
+          </button>
+        </div>
       </div>
 
+      <WeekGrid
+        availability={availability}
+        timeZone={zone}
+        fromMinute={HOUR_WINDOWS[hourWindow].fromMinute}
+        toMinute={HOUR_WINDOWS[hourWindow].toMinute}
+        onChange={onSlotsChange}
+      />
+
       <div className="card">
-        <strong>Codec check</strong>
+        <strong>Share</strong>
         <p>
-          Encodes a sample three-week calendar and puts it in a link fragment, the same path a real
-          share will take.
+          {blocks.length} open {blocks.length === 1 ? 'block' : 'blocks'} across{' '}
+          {availability.dayCount} days
+          {payload ? `, encoding to ${payload.length} characters` : ''}.
         </p>
-        <button onClick={() => void generate()}>Generate a demo link</button>
-        {shareUrl && (
+        {payload && (
           <p>
-            <code>{shareUrl}</code>
-            <br />
-            <small>
-              {shareUrl.split('#p=')[1]?.length ?? 0} characters after the <code>#</code> — and
-              everything after it stays on this device.
-            </small>
-            <br />
-            <a href={shareUrl}>Open it</a>
+            <a href={buildShareUrl(`${window.location.origin}/v`, payload)}>Open the shared view</a>{' '}
+            <small>— QR code and copy-link arrive in M3.</small>
           </p>
         )}
       </div>

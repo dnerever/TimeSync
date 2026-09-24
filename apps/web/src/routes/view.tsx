@@ -1,23 +1,5 @@
 import { useEffect, useState } from 'react';
-import { decodeAvailability, extractPayload, slotStart, type Availability } from '@timesync/core';
-
-/**
- * Contiguous runs of free time, for display. A placeholder: this becomes a
- * shared core helper at M4/M5, when overlap needs the same grouping.
- */
-function freeBlocks(av: Availability): Array<{ start: Date; end: Date }> {
-  const blocks: Array<{ start: Date; end: Date }> = [];
-  let runStart: number | null = null;
-  for (let i = 0; i <= av.slots.length; i++) {
-    const free = i < av.slots.length && av.slots[i] === 1;
-    if (free && runStart === null) runStart = i;
-    if (!free && runStart !== null) {
-      blocks.push({ start: slotStart(av, runStart), end: slotStart(av, i) });
-      runStart = null;
-    }
-  }
-  return blocks;
-}
+import { type Availability, decodeAvailability, extractPayload, freeBlocks } from '@timesync/core';
 
 const when = new Intl.DateTimeFormat(undefined, {
   weekday: 'short',

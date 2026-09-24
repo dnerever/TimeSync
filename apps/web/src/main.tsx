@@ -4,6 +4,7 @@ import { RouterProvider } from '@tanstack/react-router';
 
 import { router } from './router.tsx';
 import './styles.css';
+import './grid.css';
 
 const container = document.getElementById('root');
 if (!container) throw new Error('missing #root');
